@@ -1,0 +1,2311 @@
+USE [master]
+GO
+/****** Object:  Database [DB_BANCO2]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+CREATE DATABASE [DB_BANCO2]
+ CONTAINMENT = NONE
+ ON  PRIMARY 
+( NAME = N'DB_BANCO2', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA\DB_BANCO2.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
+ LOG ON 
+( NAME = N'DB_BANCO2_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA\DB_BANCO2_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
+ WITH CATALOG_COLLATION = DATABASE_DEFAULT, LEDGER = OFF
+GO
+ALTER DATABASE [DB_BANCO2] SET COMPATIBILITY_LEVEL = 160
+GO
+IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
+begin
+EXEC [DB_BANCO2].[dbo].[sp_fulltext_database] @action = 'enable'
+end
+GO
+ALTER DATABASE [DB_BANCO2] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET AUTO_CLOSE ON 
+GO
+ALTER DATABASE [DB_BANCO2] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [DB_BANCO2] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [DB_BANCO2] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET  ENABLE_BROKER 
+GO
+ALTER DATABASE [DB_BANCO2] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET TRUSTWORTHY OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [DB_BANCO2] SET READ_COMMITTED_SNAPSHOT OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET HONOR_BROKER_PRIORITY OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET RECOVERY SIMPLE 
+GO
+ALTER DATABASE [DB_BANCO2] SET  MULTI_USER 
+GO
+ALTER DATABASE [DB_BANCO2] SET PAGE_VERIFY CHECKSUM  
+GO
+ALTER DATABASE [DB_BANCO2] SET DB_CHAINING OFF 
+GO
+ALTER DATABASE [DB_BANCO2] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+GO
+ALTER DATABASE [DB_BANCO2] SET TARGET_RECOVERY_TIME = 60 SECONDS 
+GO
+ALTER DATABASE [DB_BANCO2] SET DELAYED_DURABILITY = DISABLED 
+GO
+ALTER DATABASE [DB_BANCO2] SET ACCELERATED_DATABASE_RECOVERY = OFF  
+GO
+ALTER DATABASE [DB_BANCO2] SET QUERY_STORE = ON
+GO
+ALTER DATABASE [DB_BANCO2] SET QUERY_STORE (OPERATION_MODE = READ_WRITE, CLEANUP_POLICY = (STALE_QUERY_THRESHOLD_DAYS = 30), DATA_FLUSH_INTERVAL_SECONDS = 900, INTERVAL_LENGTH_MINUTES = 60, MAX_STORAGE_SIZE_MB = 1000, QUERY_CAPTURE_MODE = AUTO, SIZE_BASED_CLEANUP_MODE = AUTO, MAX_PLANS_PER_QUERY = 200, WAIT_STATS_CAPTURE_MODE = ON)
+GO
+USE [DB_BANCO2]
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerClienteConCuenta]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- Author:		Jose Pablo Lemsu Concua
+-- Create date: 13/04/2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerClienteConCuenta] 
+(
+	 @CodigoCliente int
+)
+RETURNS 
+@ClientesCuentas TABLE 
+(
+CodigoCliente int,
+Nombre varchar(100),
+Categoria varchar(50) ,
+NumeroCuenta varchar(50),
+TipoCuenta varchar(50),
+Saldo decimal (10,2)
+)
+AS
+BEGIN
+	insert into @ClientesCuentas
+	Select 
+cli.CodigoCliente,
+cli.Nombre,
+cli.Categoria,
+cue.NumeroCuenta,
+cue.TipoCuenta,
+cue.Saldo
+from tbl_clientes cli
+inner join tbl_cuentas cue on cli.CodigoCliente= cue.CodigoCliente
+where cli.CodigoCliente =@CodigoCliente;
+	
+	RETURN 
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerEstadoPrestamo]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 06/04/2025
+-- Description:	<Description, ,>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerEstadoPrestamo]
+(
+	@CodigoPrestamo int
+)
+RETURNS VARCHAR(15)
+AS
+BEGIN
+	-- Declare the return variable here
+	DECLARE @EstadoPrestamo VARCHAR(15)
+
+	-- Add the T-SQL statements to compute the return value here
+	SELECT @EstadoPrestamo=Estado
+	FROM tbl_prestamos
+	WHERE CodigoPrestamo=@CodigoPrestamo;
+
+
+	-- Return the result of the function
+	RETURN ISNULL (@EstadoPrestamo,'Prestamo no existe');
+
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerEstadoTarjeta]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 15/04/2025
+-- Description:	obtener el estado de una tarjeta
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerEstadoTarjeta]
+(
+	@CodigoTarjeta int
+)
+RETURNS VARCHAR (15)
+AS
+BEGIN
+	
+	DECLARE @EstadoTarjeta VARCHAR(15)
+
+	
+	SELECT @EstadoTarjeta=Estado
+	FROM tbl_tarjetas
+	WHERE CodigoTarjeta=@CodigoTarjeta;
+
+
+	
+	RETURN ISNULL (@EstadoTarjeta,'Targeta no existe');
+
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerMesesRestantesPrestamo]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 06/04/2025
+-- Description:	<Description, ,>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerMesesRestantesPrestamo]
+(
+	@CodigoPrestamo int
+)
+RETURNS int
+AS
+BEGIN
+	-- Declare the return variable here
+	DECLARE @CantidadMeses int, @PlazoMeses int, @FechaPrestamo DateTime;
+
+	-- Add the T-SQL statements to compute the return value here
+	SELECT @PlazoMeses=PlazoMeses,@FechaPrestamo=FechaPrestamo
+	FROM tbl_prestamos
+	WHERE CodigoPrestamo=@CodigoPrestamo;
+
+	SET @CantidadMeses= @PlazoMeses-DATEDIFF(MONTH,@FechaPrestamo,GETDATE ());
+
+
+	-- Return the result of the function
+	RETURN ISNULL (@CantidadMeses,0);
+
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerNombreCliente]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 15/04/2025
+-- Description:	para obtener el nombre del cliente
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerNombreCliente]
+(
+	@CodigoCliente int
+)
+RETURNS VARCHAR(100)
+AS
+BEGIN
+
+	DECLARE @NombreCliente VARCHAR(100)
+    SELECT @NombreCliente=Nombre
+	FROM tbl_clientes
+	WHERE CodigoCliente=@CodigoCliente;
+
+	
+	RETURN @NombreCliente
+
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerNumeroCuentaClientes]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date, ,>
+-- Description:	Obtener el número de cuenta de un cliente
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerNumeroCuentaClientes]
+(
+	@CodigoCliente int
+)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+	
+	DECLARE @NumeroCuentas  VARCHAR(50)
+	
+
+	SELECT Top 1 @NumeroCuentas=NumeroCuenta
+	FROM tbl_cuentas
+	WHERE CodigoCliente=@CodigoCliente
+
+	
+	RETURN  ISNULL (@NumeroCuentas,'Cuenta no existe');
+
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerSaldoCuentasCliente]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 06/04/2025
+-- Description:	<Description, ,>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerSaldoCuentasCliente]
+(
+	@CodigoCliente int
+)
+RETURNS decimal(10,2)
+AS
+BEGIN
+
+	DECLARE @SaldoCliente decimal(10,2)
+
+	
+	SELECT @SaldoCliente=SUM(Saldo)
+	FROM tbl_cuentas
+	WHERE CodigoCliente=1;
+
+
+	RETURN ISNULL(@SaldoCliente,0);
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerSumaTransaccionesClientes]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 15/04/2025
+-- Description:	Obtener la suma total de transacciones de los movimientos de un cliente
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerSumaTransaccionesClientes] 
+(
+	@CodigoCliente int
+)
+RETURNS Decimal (10,2)
+AS
+BEGIN
+	
+	DECLARE @TotalTransacciones Decimal (10,2)
+	SELECT @TotalTransacciones =  ISNULL (SUM(Monto),0)
+	FROM tbl_movimientos
+	WHERE CodigoCuenta = @CodigoCliente
+	
+	
+	RETURN @TotalTransacciones;
+
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerTasaInteresPrestamo]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 15/04/2025
+-- Description:	para obtener la tasa de interés de un préstamo
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerTasaInteresPrestamo]
+(
+	@CodigoPrestamo int
+)
+RETURNS Decimal(5,2)
+AS
+BEGIN
+	-- Declare the return variable here
+	DECLARE @TasaInteresPrestamo Decimal(5,2)
+
+	-- Add the T-SQL statements to compute the return value here
+	SELECT @TasaInteresPrestamo=TasaInteres
+	FROM tbl_prestamos
+	WHERE CodigoPrestamo=@CodigoPrestamo;
+
+
+	-- Return the result of the function
+	RETURN @TasaInteresPrestamo;
+
+END
+GO
+/****** Object:  Table [dbo].[tbl_clientes]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_clientes](
+	[CodigoCliente] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nvarchar](100) NOT NULL,
+	[Direccion] [nvarchar](255) NULL,
+	[Departamento] [nvarchar](100) NULL,
+	[Pais] [nvarchar](100) NULL,
+	[Categoria] [nvarchar](50) NULL,
+	[Estado] [nvarchar](15) NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[CodigoCliente] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[tbl_tarjetas]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_tarjetas](
+	[CodigoTarjeta] [int] IDENTITY(1,1) NOT NULL,
+	[CodigoCliente] [int] NOT NULL,
+	[NumeroTarjeta] [nvarchar](50) NOT NULL,
+	[TipoTarjeta] [nvarchar](50) NULL,
+	[CategoriaTarjeta] [nvarchar](50) NULL,
+	[FechaExpiracion] [datetime] NULL,
+	[CVV] [nvarchar](4) NULL,
+	[Monto] [decimal](10, 2) NULL,
+	[Moneda] [nvarchar](10) NOT NULL,
+	[Estado] [nvarchar](15) NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[CodigoTarjeta] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerClientesActivosTargetasAsociadas]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 15/04/2025
+-- Description: todos los clientes con estado activo y tarjetas asociadas
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerClientesActivosTargetasAsociadas]
+(	
+	 @CodigoCliente int
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	
+	SELECT 
+	cli.CodigoCliente,
+	cli.Nombre,
+	cli.Estado,
+	tar.NumeroTarjeta
+	FROM tbl_clientes cli
+	JOIN tbl_tarjetas tar ON tar.CodigoCliente = cli.CodigoCliente
+	WHERE cli.Estado='Activo' 
+
+
+)
+GO
+/****** Object:  View [dbo].[Vw_clientes]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+	create view [dbo].[Vw_clientes] 
+	as
+	(
+		Select *
+		from tbl_clientes
+	);
+GO
+/****** Object:  Table [dbo].[tbl_prestamos]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_prestamos](
+	[CodigoPrestamo] [int] IDENTITY(1,1) NOT NULL,
+	[CodigoCliente] [int] NOT NULL,
+	[MotivoPrestamo] [nvarchar](255) NULL,
+	[Monto] [decimal](10, 2) NOT NULL,
+	[Moneda] [nvarchar](10) NOT NULL,
+	[TasaInteres] [decimal](5, 2) NULL,
+	[PlazoMeses] [int] NULL,
+	[FechaPrestamo] [datetime] NULL,
+	[Estado] [nvarchar](15) NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[CodigoPrestamo] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerPrestamosActivosClientes]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 15/04/2025
+-- Description:	Función para obtener todos los préstamos activos de un cliente
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerPrestamosActivosClientes]
+(	
+   @CodigoCliente int
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	-- Add the SELECT statement with parameter references here
+	SELECT 
+	CodigoPrestamo,
+	CodigoCliente,
+	Estado,
+	MotivoPrestamo,
+	Monto,
+	Moneda,
+	FechaPrestamo
+
+	FROM tbl_prestamos
+	WHERE CodigoCliente = @CodigoCliente AND Estado = 'Activo'
+)
+GO
+/****** Object:  View [dbo].[Vw_clientes2]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+	Create view [dbo].[Vw_clientes2] 
+	as
+	(
+		Select 
+			CodigoCliente,
+			Nombre,
+			Direccion,
+			Departamento, 
+			Estado
+		from tbl_clientes
+	);
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerTargetasClienteConSaldoMayor5000]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 15/04/2025
+-- Description:	Función para obtener todas las tarjetas de un cliente con saldo>5000
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerTargetasClienteConSaldoMayor5000]
+(	
+	@CodigoCliente int
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	-- Add the SELECT statement with parameter references here
+	SELECT 
+	CodigoTarjeta,
+	CodigoCliente,
+	TipoTarjeta,
+	CategoriaTarjeta,
+	Monto
+
+	FROM tbl_tarjetas
+	WHERE CodigoCliente = @CodigoCliente AND Monto > 5000 
+)
+GO
+/****** Object:  Table [dbo].[tbl_cuentas]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_cuentas](
+	[CodigoCuenta] [int] IDENTITY(1,1) NOT NULL,
+	[CodigoCliente] [int] NOT NULL,
+	[NumeroCuenta] [nvarchar](50) NOT NULL,
+	[TipoCuenta] [nvarchar](50) NULL,
+	[Saldo] [decimal](10, 2) NULL,
+	[FechaApertura] [datetime] NULL,
+	[Estado] [nvarchar](15) NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[CodigoCuenta] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[tbl_pagos]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_pagos](
+	[CodigoPago] [int] IDENTITY(1,1) NOT NULL,
+	[CodigoPrestamo] [int] NULL,
+	[CodigoTarjeta] [int] NULL,
+	[CodigoCuenta] [int] NULL,
+	[Monto] [decimal](10, 2) NOT NULL,
+	[MonedaPago] [nvarchar](10) NOT NULL,
+	[FechaPago] [datetime] NULL,
+	[Estado] [nvarchar](15) NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[CodigoPago] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtienePagosRealizadosEnLosUltimos24Meses]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 15/04/2025
+-- Description: Función para obtener los pagos de un cliente realizados en los últimos 24 meses
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtienePagosRealizadosEnLosUltimos24Meses]
+(	
+	 @CodigoCliente int
+
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	-- Add the SELECT statement with parameter references here
+	SELECT 
+
+	pag.CodigoPago,
+	pag.CodigoPrestamo,
+	pag.FechaPago,
+	pag.Estado
+	FROM tbl_pagos pag
+	JOIN tbl_cuentas cue ON pag.CodigoCuenta=cue.CodigoCuenta
+	WHERE CodigoCliente = @CodigoCliente 
+	AND FechaPago >= DATEADD(MONTH, -24, GETDATE ())
+)
+GO
+/****** Object:  Table [dbo].[tbl_movimientos]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_movimientos](
+	[CodigoMovimiento] [int] IDENTITY(1,1) NOT NULL,
+	[CodigoCuenta] [int] NOT NULL,
+	[TipoTransaccion] [nvarchar](50) NULL,
+	[Monto] [decimal](10, 2) NOT NULL,
+	[Moneda] [nvarchar](10) NOT NULL,
+	[Estado] [nvarchar](15) NULL,
+	[FechaTransaccion] [datetime] NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[CodigoMovimiento] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerCuentasConEstadoActivoMontomayor5000menor8000]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 15/04/2025
+-- Función para obtener los movimientos recientes de las cuentas con estado Activo, monto>500 y monto<8000
+
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerCuentasConEstadoActivoMontomayor5000menor8000]
+(
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	-- Add the SELECT statement with parameter references here
+	SELECT 
+	cue.CodigoCuenta,
+	mov.CodigoMovimiento,
+	cue.Estado,
+	mov.Monto
+	FROM tbl_movimientos mov
+	JOIN tbl_cuentas cue ON mov.CodigoCuenta=cue.CodigoCuenta
+	WHERE cue.Estado= 'Activo' AND mov.Monto>500 AND mov.Monto<8000
+)
+GO
+/****** Object:  View [dbo].[Vw_clientes3]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+	Create view [dbo].[Vw_clientes3]
+	as
+	(
+		Select 
+			c.CodigoCliente,
+			c.Nombre,
+			c.Pais,
+			c.Departamento,
+			p.CodigoPrestamo,
+			p.FechaPrestamo,
+			p.Moneda,
+			p.Monto,
+			p.PlazoMeses,
+			p.TasaInteres,
+			p.Estado
+		from tbl_clientes c
+				inner join tbl_prestamos p on c.CodigoCliente=p.CodigoCliente
+	);
+GO
+/****** Object:  View [dbo].[Vw_clientes4]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+	Create view [dbo].[Vw_clientes4]
+	as
+	(
+		Select 
+			c.CodigoCliente,
+			c.Nombre,
+			c.Pais,
+			c.Departamento,
+			p.CodigoPrestamo,
+			p.FechaPrestamo,
+			p.Moneda,
+			p.Monto,
+			p.PlazoMeses,
+			p.TasaInteres,
+			p.Estado
+		from tbl_clientes c
+				inner join tbl_prestamos p on c.CodigoCliente=p.CodigoCliente
+		where c.Estado='Activo'
+	);
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerCuentasClientes]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--============================================
+-- Author:		Jose Lemus
+-- Create date: 04/04/2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerCuentasClientes]
+(	
+	@CodigoCliente int
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	-- Add the SELECT statement with parameter references here
+	SELECT 
+	cli.Codigocliente,
+	cli.Nombre,
+	cu.CodigoCuenta,
+	cu.NumeroCuenta,
+	cu.Estado
+	FROM tbl_clientes cli
+	inner join tbl_cuentas cu on cli.CodigoCliente=cu.CodigoCliente
+);
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerMovimientosCuenta]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemsu
+-- Create date: 06/04/2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerMovimientosCuenta]
+
+(	
+	@CodigoCuenta int
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	Select 
+	cu.CodigoCuenta,
+	cu.NumeroCuenta,
+	cu.Saldo,
+	mov.TipoTransaccion,
+	mov.Moneda,
+	mov.Monto
+	from tbl_cuentas cu
+	inner join tbl_movimientos mov on cu.CodigoCuenta = mov.CodigoCuenta
+	where cu.CodigoCuenta = @CodigoCuenta
+)
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerPagosPrestamo]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- Author:		Jose Lemus
+-- Create date: 06/04/2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_ObtenerPagosPrestamo]
+(	
+	@CodigoPrestamo int
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	Select
+	pr.CodigoPrestamo,
+	pr.CodigoCliente,
+	pr.FechaPrestamo,
+	pr.Monto,
+	pa.CodigoPago
+	From tbl_prestamos pr
+	inner join tbl_pagos pa on pr.CodigoPrestamo = pa.CodigoPrestamo
+	where pr.CodigoPrestamo = @CodigoPrestamo
+)
+
+GO
+/****** Object:  Table [dbo].[tbl_clientes_backup]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_clientes_backup](
+	[CodigoCliente] [int] NOT NULL,
+	[Nombre] [nvarchar](100) NOT NULL,
+	[Direccion] [nvarchar](255) NULL,
+	[Departamento] [nvarchar](100) NULL,
+	[Pais] [nvarchar](100) NULL,
+	[Categoria] [nvarchar](50) NULL,
+	[Estado] [nvarchar](15) NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[tbl_cuentas_backup]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_cuentas_backup](
+	[CodigoCuenta] [int] NOT NULL,
+	[CodigoCliente] [int] NOT NULL,
+	[NumeroCuenta] [nvarchar](50) NOT NULL,
+	[TipoCuenta] [nvarchar](50) NULL,
+	[Saldo] [decimal](10, 2) NULL,
+	[FechaApertura] [datetime] NULL,
+	[Estado] [nvarchar](15) NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[tbl_usuarios]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_usuarios](
+	[Correlativo] [int] IDENTITY(1,1) NOT NULL,
+	[Usuario] [nvarchar](100) NOT NULL,
+	[Clave] [nvarchar](255) NOT NULL,
+	[Estado] [nvarchar](15) NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[Correlativo] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[tbl_usuarios_Backup]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_usuarios_Backup](
+	[Correlativo] [int] NOT NULL,
+	[Usuario] [nvarchar](100) NOT NULL,
+	[Clave] [nvarchar](255) NOT NULL,
+	[Estado] [nvarchar](15) NULL,
+	[UsuarioCreacion] [nvarchar](100) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[HoraCreacion] [time](7) NULL,
+	[UsuarioActualizacion] [nvarchar](100) NULL,
+	[FechaActualizacion] [datetime] NULL,
+	[HoraActualizacion] [time](7) NULL,
+	[UsuarioEliminacion] [nvarchar](100) NULL,
+	[FechaEliminacion] [datetime] NULL,
+	[HoraEliminacion] [time](7) NULL
+) ON [PRIMARY]
+GO
+SET IDENTITY_INSERT [dbo].[tbl_clientes] ON 
+
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (1, N'Sofia Torres', N'6a Avenida 5-60', N'Guatemala', N'Guatemala', N'Regular', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (2, N'Fernando Ruiz', N'7a Calle 6-70', N'Zacapa', N'Guatemala', N'Premium', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (3, N'Gloria Castillo', N'8a Avenida 7-80', N'Santa Rosa', N'Guatemala', N'Regular', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (4, N'Jorge Ramírez', N'9a Calle 8-90', N'Alta Verapaz', N'Guatemala', N'Premium', N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (5, N'Patricia Fernández', N'10a Avenida 9-100', N'Baja Verapaz', N'Guatemala', N'Regular', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (6, N'Juan Perez', N'1a Avenida 5-10', N'Guatemala', N'Guatemala', N'Regular', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (7, N'Maria Lopez', N'2a Calle 6-20', N'Quetzaltenango', N'Guatemala', N'Lista Negra', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (8, N'Carlos Gomez', N'3a Avenida 7-30', N'San Marcos', N'Guatemala', N'Regular', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (9, N'Ana Martinez', N'4a Calle 8-40', N'Escuintla', N'Guatemala', N'Premium', N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (10, N'Luis Morales', N'5a Avenida 9-50', NULL, N'Guatemala', N'Lista Negra', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (11, N'Diego Hernandez', N'11a Avenida 10-110', N'Guatemala', N'Guatemala', N'Regular', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (12, N'Isabel Martinez', N'12a Calle 11-120', N'Chiquimula', N'Guatemala', N'Premium', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (13, N'Ricardo Morales', N'13a Avenida 12-130', N'Izabal', N'Guatemala', N'Regular', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (14, N'Laura Gomez', N'14a Calle 13-140', N'Petén', N'Guatemala', N'Premium', N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (15, N'Jose Lopez', N'15a Avenida 14-150', N'Snta Rosa', N'Guatemala', N'Regular', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_clientes] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (27, N'Jose Lopez', N'15a Avenida 14-150', N'Snta Rosa', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-28T18:54:38.460' AS DateTime), CAST(N'18:54:38.4600000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T18:54:38.470' AS DateTime), CAST(N'18:54:38.4700000' AS Time), NULL, NULL, NULL)
+SET IDENTITY_INSERT [dbo].[tbl_clientes] OFF
+GO
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (18, N'Jose lemus', N'8a Avenida 7-80', N'Santa Rosa', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-27T17:26:02.350' AS DateTime), CAST(N'17:26:02.3500000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-27T17:26:25.690' AS DateTime), CAST(N'17:26:25.6900000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-27T00:00:00.000' AS DateTime), CAST(N'17:56:45.7466667' AS Time))
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (17, N'Gloria Castillo', N'8a Avenida 7-80', N'Santa Rosa', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-27T16:10:44.900' AS DateTime), CAST(N'16:10:44.9000000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-27T16:10:44.910' AS DateTime), CAST(N'16:10:44.9100000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-27T00:00:00.000' AS DateTime), CAST(N'17:57:30.9700000' AS Time))
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (19, N'Jose Lopez', N'15a Avenida 14-150', N'Snta Rosa', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-28T14:37:39.740' AS DateTime), CAST(N'14:37:39.7400000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T14:37:39.750' AS DateTime), CAST(N'14:37:39.7500000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'14:38:04.3700000' AS Time))
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (20, N'Jose Lopez', N'15a Avenida 14-150', N'Snta Rosa', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-28T14:39:43.550' AS DateTime), CAST(N'14:39:43.5500000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T14:39:43.560' AS DateTime), CAST(N'14:39:43.5600000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'14:40:14.7033333' AS Time))
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (21, N'Pablo', N'15a Avenida 14-150', N'Snta Rosa', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-28T15:30:03.700' AS DateTime), CAST(N'15:30:03.7000000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T15:30:21.630' AS DateTime), CAST(N'15:30:21.6300000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'15:31:01.4633333' AS Time))
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (22, N'Jose Lopez', N'15a Avenida 14-150', N'Snta Rosa', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-28T15:38:15.490' AS DateTime), CAST(N'15:38:15.4900000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T15:38:15.497' AS DateTime), CAST(N'15:38:15.4966667' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'15:38:26.8466667' AS Time))
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (24, N'Jose Lopez', N'15a Avenida 14-150', N'Guatemala', N'Guatemala', N'Regular', N'Inactivo', N'Joselemus\jlemu', CAST(N'2025-03-28T17:58:58.850' AS DateTime), CAST(N'17:58:58.8500000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T17:59:35.400' AS DateTime), CAST(N'17:59:35.4000000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'17:59:44.4900000' AS Time))
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (26, N'Sofia Torres', N'6a Avenida 5-60', N'Guatemala', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-28T18:53:39.040' AS DateTime), CAST(N'18:53:39.0400000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T18:53:39.063' AS DateTime), CAST(N'18:53:39.0633333' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'18:54:08.8133333' AS Time))
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (25, N'Sofia Torres', N'6a Avenida 5-60', N'Guatemala', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-28T18:52:10.910' AS DateTime), CAST(N'18:52:10.9100000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T18:52:10.920' AS DateTime), CAST(N'18:52:10.9200000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'18:54:24.1866667' AS Time))
+INSERT [dbo].[tbl_clientes_backup] ([CodigoCliente], [Nombre], [Direccion], [Departamento], [Pais], [Categoria], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (23, N'Jose Lopez', N'15a Avenida 14-150', N'Snta Rosa', N'Guatemala', N'Regular', N'Activo', N'Joselemus\jlemu', CAST(N'2025-03-28T17:33:28.323' AS DateTime), CAST(N'17:33:28.3233333' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T17:33:28.330' AS DateTime), CAST(N'17:33:28.3300000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'17:59:50.4533333' AS Time))
+GO
+SET IDENTITY_INSERT [dbo].[tbl_cuentas] ON 
+
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (1, 1, N'GT123456789', N'Ahorro', CAST(1000.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (2, 2, N'GT987654321', N'Corriente', CAST(5000.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (3, 3, N'GT123123123', N'Ahorro', CAST(1500.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (4, 1, N'GT321321321', N'Corriente', CAST(2000.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (5, 4, N'GT456456456', N'Ahorro', CAST(800.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.000' AS DateTime), N'Activo', NULL, NULL, NULL, N'Joselemus\jlemu', CAST(N'2025-03-28T17:48:59.843' AS DateTime), CAST(N'17:48:59.8433333' AS Time), NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (6, 6, N'GT654321987', N'Ahorro', CAST(1200.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (7, 7, N'GT789654123', N'Corriente', CAST(4000.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (8, 8, N'GT321987654', N'Ahorro', CAST(1700.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (9, 6, N'GT147258369', N'Corriente', CAST(2500.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (10, 9, N'GT963258741', N'Ahorro', CAST(900.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (11, 1, N'GT111213141', N'Ahorro', CAST(950.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (12, 2, N'GT151617181', N'Corriente', CAST(5600.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (13, 13, N'GT192021222', N'Ahorro', CAST(1250.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (14, 11, N'GT232425262', N'Corriente', CAST(3100.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.370' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_cuentas] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (15, 1, N'GT272829303', N'Ahorro', CAST(700.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.000' AS DateTime), N'Activo', NULL, NULL, NULL, N'Joselemus\jlemu', CAST(N'2025-03-28T17:49:14.243' AS DateTime), CAST(N'17:49:14.2433333' AS Time), NULL, NULL, NULL)
+SET IDENTITY_INSERT [dbo].[tbl_cuentas] OFF
+GO
+INSERT [dbo].[tbl_cuentas_backup] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (16, 1, N'GT272829303', N'Ahorro', CAST(700.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.000' AS DateTime), N'Inactivo', N'Joselemus\jlemu', CAST(N'2025-03-28T16:29:34.920' AS DateTime), CAST(N'16:29:34.9200000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T16:29:34.927' AS DateTime), CAST(N'16:29:34.9266667' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'16:30:46.7000000' AS Time))
+INSERT [dbo].[tbl_cuentas_backup] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (18, 1, N'GT272829303', N'Ahorro', CAST(700.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.000' AS DateTime), N'Inactivo', N'Joselemus\jlemu', CAST(N'2025-03-28T17:31:28.153' AS DateTime), CAST(N'17:31:28.1533333' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T17:31:28.160' AS DateTime), CAST(N'17:31:28.1600000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'17:34:42.7533333' AS Time))
+INSERT [dbo].[tbl_cuentas_backup] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (17, 1, N'GT272829303', N'Ahorro', CAST(700.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.000' AS DateTime), N'Inactivo', N'Joselemus\jlemu', CAST(N'2025-03-28T17:31:11.723' AS DateTime), CAST(N'17:31:11.7233333' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T17:31:11.730' AS DateTime), CAST(N'17:31:11.7300000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'17:34:49.1566667' AS Time))
+INSERT [dbo].[tbl_cuentas_backup] ([CodigoCuenta], [CodigoCliente], [NumeroCuenta], [TipoCuenta], [Saldo], [FechaApertura], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (19, 1, N'GT272829303', N'Corriente', CAST(700.00 AS Decimal(10, 2)), CAST(N'2025-03-08T15:04:22.000' AS DateTime), N'Inactivo', N'Joselemus\jlemu', CAST(N'2025-03-28T17:47:46.023' AS DateTime), CAST(N'17:47:46.0233333' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T17:48:14.093' AS DateTime), CAST(N'17:48:14.0933333' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'17:48:43.8066667' AS Time))
+GO
+SET IDENTITY_INSERT [dbo].[tbl_movimientos] ON 
+
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (1, 1, N'Deposito', CAST(500.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2020-01-01T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (2, 1, N'Retiro', CAST(200.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2020-05-05T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (3, 2, N'Deposito', CAST(1500.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2020-07-03T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (4, 3, N'Retiro', CAST(300.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2020-11-04T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (5, 5, N'Deposito', CAST(700.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2021-01-05T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (6, 6, N'Deposito', CAST(600.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2021-05-07T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (7, 6, N'Retiro', CAST(150.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2021-07-10T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (8, 7, N'Deposito', CAST(1300.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2021-12-05T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (9, 8, N'Retiro', CAST(200.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2022-01-14T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (10, 10, N'Deposito', CAST(400.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2022-06-18T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (11, 1, N'Depósito', CAST(400.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2022-11-13T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (12, 1, N'Retiro', CAST(100.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2023-11-01T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (13, 10, N'Depósito', CAST(800.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2024-01-01T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (14, 10, N'Retiro', CAST(300.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2024-07-07T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_movimientos] ([CodigoMovimiento], [CodigoCuenta], [TipoTransaccion], [Monto], [Moneda], [Estado], [FechaTransaccion], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (15, 10, N'Depósito', CAST(600.00 AS Decimal(10, 2)), N'GTQ', N'Completado', CAST(N'2024-05-28T00:00:00.000' AS DateTime), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+SET IDENTITY_INSERT [dbo].[tbl_movimientos] OFF
+GO
+SET IDENTITY_INSERT [dbo].[tbl_pagos] ON 
+
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (1, 1, NULL, NULL, CAST(2000.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Pagado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (2, 2, NULL, NULL, CAST(1000.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Pagado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (3, 3, NULL, NULL, CAST(1500.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Pagado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (4, 4, NULL, NULL, CAST(500.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Pendiente', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (5, 5, NULL, NULL, CAST(3000.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Proceso', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (6, NULL, 1, NULL, CAST(2500.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Completado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (7, NULL, 2, NULL, CAST(1500.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Completado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (8, NULL, 3, NULL, CAST(2000.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Completado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (9, NULL, 4, NULL, CAST(600.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Pendiente', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (10, NULL, 6, NULL, CAST(3500.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Completado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (11, NULL, NULL, 2, CAST(1500.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Completado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (12, NULL, NULL, 4, CAST(800.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Completado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (13, NULL, NULL, 5, CAST(2000.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Completado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (14, NULL, NULL, 6, CAST(600.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Pendiente', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_pagos] ([CodigoPago], [CodigoPrestamo], [CodigoTarjeta], [CodigoCuenta], [Monto], [MonedaPago], [FechaPago], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (15, NULL, NULL, 8, CAST(3000.00 AS Decimal(10, 2)), N'GTQ', CAST(N'2025-03-08T15:04:22.380' AS DateTime), N'Completado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+SET IDENTITY_INSERT [dbo].[tbl_pagos] OFF
+GO
+SET IDENTITY_INSERT [dbo].[tbl_prestamos] ON 
+
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (1, 1, N'Compra de vivienda', CAST(100000.00 AS Decimal(10, 2)), N'GTQ', CAST(5.00 AS Decimal(5, 2)), 60, CAST(N'2020-01-30T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (2, 2, N'Educacion', CAST(20000.00 AS Decimal(10, 2)), N'GTQ', CAST(6.00 AS Decimal(5, 2)), 24, CAST(N'2020-01-30T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (3, 3, N'Negocio propio', CAST(50000.00 AS Decimal(10, 2)), N'GTQ', CAST(5.50 AS Decimal(5, 2)), 36, CAST(N'2021-02-02T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (4, 4, N'Viaje', CAST(15000.00 AS Decimal(10, 2)), N'GTQ', CAST(7.00 AS Decimal(5, 2)), 12, CAST(N'2020-10-05T00:00:00.000' AS DateTime), N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (5, 5, N'Compra de vehiculo', CAST(30000.00 AS Decimal(10, 2)), N'GTQ', CAST(6.50 AS Decimal(5, 2)), 48, CAST(N'2022-03-24T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (6, 6, N'Compra de vivienda', CAST(120000.00 AS Decimal(10, 2)), N'GTQ', CAST(5.25 AS Decimal(5, 2)), 60, CAST(N'2023-04-07T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (7, 7, N'Educacion', CAST(25000.00 AS Decimal(10, 2)), N'GTQ', CAST(6.50 AS Decimal(5, 2)), 24, CAST(N'2020-01-08T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (8, 8, N'Negocio propio', CAST(60000.00 AS Decimal(10, 2)), N'GTQ', CAST(5.75 AS Decimal(5, 2)), 36, CAST(N'2022-05-15T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (9, 9, N'Negocio propio', CAST(20000.00 AS Decimal(10, 2)), N'GTQ', CAST(7.25 AS Decimal(5, 2)), 12, CAST(N'2021-04-18T00:00:00.000' AS DateTime), N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (10, 10, N'Negocio propio', CAST(35000.00 AS Decimal(10, 2)), N'GTQ', CAST(6.75 AS Decimal(5, 2)), 48, CAST(N'2020-01-01T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (11, 11, N'Viaje', CAST(95000.00 AS Decimal(10, 2)), N'GTQ', CAST(5.80 AS Decimal(5, 2)), 60, CAST(N'2024-08-04T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (12, 12, N'Viaje', CAST(18000.00 AS Decimal(10, 2)), N'GTQ', CAST(6.20 AS Decimal(5, 2)), 12, CAST(N'2020-11-10T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (13, 3, N'Compra de vivienda', CAST(70000.00 AS Decimal(10, 2)), N'GTQ', CAST(5.50 AS Decimal(5, 2)), 36, CAST(N'2023-07-13T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (14, 3, N'Educacion', CAST(25000.00 AS Decimal(10, 2)), N'GTQ', CAST(6.80 AS Decimal(5, 2)), 24, CAST(N'2021-05-15T00:00:00.000' AS DateTime), N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (15, 5, N'Compra de vehiculo', CAST(40000.00 AS Decimal(10, 2)), N'GTQ', CAST(6.00 AS Decimal(5, 2)), 48, CAST(N'2024-04-04T00:00:00.000' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_prestamos] ([CodigoPrestamo], [CodigoCliente], [MotivoPrestamo], [Monto], [Moneda], [TasaInteres], [PlazoMeses], [FechaPrestamo], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (18, 13, N'Compra de vehículo', CAST(10000.00 AS Decimal(10, 2)), N'USD', CAST(7.50 AS Decimal(5, 2)), 24, CAST(N'2025-04-05T19:00:48.527' AS DateTime), N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+SET IDENTITY_INSERT [dbo].[tbl_prestamos] OFF
+GO
+SET IDENTITY_INSERT [dbo].[tbl_tarjetas] ON 
+
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (1, 1, N'1234 5678 9012 3456', N'Credito', N'Standard', CAST(N'2025-12-31T00:00:00.000' AS DateTime), N'123', CAST(5000.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (2, 2, N'2345 6789 0123 4567', N'Debito', N'Platinum', CAST(N'2024-11-30T00:00:00.000' AS DateTime), N'456', CAST(3000.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (3, 3, N'3456 7890 1234 5678', N'Credito', N'Standard', CAST(N'2026-10-31T00:00:00.000' AS DateTime), N'789', CAST(7000.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (4, 4, N'4567 8901 2345 6789', N'Credito', N'Black', CAST(N'2023-05-31T00:00:00.000' AS DateTime), N'321', CAST(2000.00 AS Decimal(10, 2)), N'GTQ', N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (5, 5, N'5678 9012 3456 7890', N'Debito', N'Oro', CAST(N'2025-03-31T00:00:00.000' AS DateTime), N'654', CAST(1500.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (6, 6, N'6789 0123 4567 8901', N'Credito', N'Standard', CAST(N'2026-06-30T00:00:00.000' AS DateTime), N'234', CAST(6000.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (7, 7, N'7890 1234 5678 9012', N'Debito', N'Platinum', CAST(N'2024-07-31T00:00:00.000' AS DateTime), N'567', CAST(3500.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (8, 1, N'8901 2345 6789 0123', N'Credito', N'Oro', CAST(N'2025-08-31T00:00:00.000' AS DateTime), N'890', CAST(7500.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (9, 9, N'9012 3456 7890 1234', N'Credito', N'Oro', CAST(N'2023-09-30T00:00:00.000' AS DateTime), N'123', CAST(2500.00 AS Decimal(10, 2)), N'GTQ', N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (10, 1, N'0123 4567 8901 2345', N'Debito', N'Premium', CAST(N'2026-10-31T00:00:00.000' AS DateTime), N'456', CAST(1800.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (11, 1, N'1234 5678 9012 3456', N'Credito', N'Standard', CAST(N'2025-02-28T00:00:00.000' AS DateTime), N'234', CAST(4500.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (12, 2, N'2345 6789 0123 4567', N'Debito', N'Platinum', CAST(N'2024-03-31T00:00:00.000' AS DateTime), N'567', CAST(3200.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (13, 13, N'3456 7890 1234 5678', N'Credito', N'Standard', CAST(N'2026-04-30T00:00:00.000' AS DateTime), N'890', CAST(6800.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (14, 4, N'4567 8901 2345 6789', N'Credito', N'Standard', CAST(N'2023-05-31T00:00:00.000' AS DateTime), N'321', CAST(1500.00 AS Decimal(10, 2)), N'GTQ', N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_tarjetas] ([CodigoTarjeta], [CodigoCliente], [NumeroTarjeta], [TipoTarjeta], [CategoriaTarjeta], [FechaExpiracion], [CVV], [Monto], [Moneda], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (15, 15, N'5678 9012 3456 7890', N'Debito', N'Platinum', CAST(N'2026-06-30T00:00:00.000' AS DateTime), N'654', CAST(2100.00 AS Decimal(10, 2)), N'GTQ', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+SET IDENTITY_INSERT [dbo].[tbl_tarjetas] OFF
+GO
+SET IDENTITY_INSERT [dbo].[tbl_usuarios] ON 
+
+INSERT [dbo].[tbl_usuarios] ([Correlativo], [Usuario], [Clave], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (1, N'admin', N'root', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_usuarios] ([Correlativo], [Usuario], [Clave], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (2, N'jalvarez', N'alvarez123', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_usuarios] ([Correlativo], [Usuario], [Clave], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (3, N'jroman', N'123', N'Activo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_usuarios] ([Correlativo], [Usuario], [Clave], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (4, N'aaldana', N'aldana2024', N'Inactivo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[tbl_usuarios] ([Correlativo], [Usuario], [Clave], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (6, N'jopa', N'aldana2024', N'Inactivo', N'Joselemus\jlemu', CAST(N'2025-03-28T17:57:35.473' AS DateTime), CAST(N'17:57:35.4733333' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T17:58:15.967' AS DateTime), CAST(N'17:58:15.9666667' AS Time), NULL, NULL, NULL)
+INSERT [dbo].[tbl_usuarios] ([Correlativo], [Usuario], [Clave], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (9, N'jopa', N'aldana2024', N'Inactivo', N'Joselemus\jlemu', CAST(N'2025-03-28T20:37:14.837' AS DateTime), CAST(N'20:37:14.8366667' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T20:37:14.850' AS DateTime), CAST(N'20:37:14.8500000' AS Time), NULL, NULL, NULL)
+SET IDENTITY_INSERT [dbo].[tbl_usuarios] OFF
+GO
+INSERT [dbo].[tbl_usuarios_Backup] ([Correlativo], [Usuario], [Clave], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (5, N'pdonis', N'hacker123', N'Inactivo', NULL, NULL, NULL, N'Joselemus\jlemu', CAST(N'2025-03-28T17:36:56.700' AS DateTime), CAST(N'17:36:56.7000000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'17:37:14.0533333' AS Time))
+INSERT [dbo].[tbl_usuarios_Backup] ([Correlativo], [Usuario], [Clave], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (7, N'aaldana', N'aldana2024', N'Inactivo', N'Joselemus\jlemu', CAST(N'2025-03-28T17:57:46.003' AS DateTime), CAST(N'17:57:46.0033333' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T17:57:46.003' AS DateTime), CAST(N'17:57:46.0033333' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'17:57:55.8733333' AS Time))
+INSERT [dbo].[tbl_usuarios_Backup] ([Correlativo], [Usuario], [Clave], [Estado], [UsuarioCreacion], [FechaCreacion], [HoraCreacion], [UsuarioActualizacion], [FechaActualizacion], [HoraActualizacion], [UsuarioEliminacion], [FechaEliminacion], [HoraEliminacion]) VALUES (8, N'jopa', N'aldaJose2024', N'Inactivo', N'Joselemus\jlemu', CAST(N'2025-03-28T18:02:25.017' AS DateTime), CAST(N'18:02:25.0166667' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T18:03:23.070' AS DateTime), CAST(N'18:03:23.0700000' AS Time), N'Joselemus\jlemu', CAST(N'2025-03-28T00:00:00.000' AS DateTime), CAST(N'18:03:40.3433333' AS Time))
+GO
+ALTER TABLE [dbo].[tbl_cuentas]  WITH CHECK ADD FOREIGN KEY([CodigoCliente])
+REFERENCES [dbo].[tbl_clientes] ([CodigoCliente])
+GO
+ALTER TABLE [dbo].[tbl_movimientos]  WITH CHECK ADD FOREIGN KEY([CodigoCuenta])
+REFERENCES [dbo].[tbl_cuentas] ([CodigoCuenta])
+GO
+ALTER TABLE [dbo].[tbl_pagos]  WITH CHECK ADD FOREIGN KEY([CodigoPrestamo])
+REFERENCES [dbo].[tbl_prestamos] ([CodigoPrestamo])
+GO
+ALTER TABLE [dbo].[tbl_pagos]  WITH CHECK ADD FOREIGN KEY([CodigoTarjeta])
+REFERENCES [dbo].[tbl_tarjetas] ([CodigoTarjeta])
+GO
+ALTER TABLE [dbo].[tbl_pagos]  WITH CHECK ADD FOREIGN KEY([CodigoCuenta])
+REFERENCES [dbo].[tbl_cuentas] ([CodigoCuenta])
+GO
+ALTER TABLE [dbo].[tbl_prestamos]  WITH CHECK ADD FOREIGN KEY([CodigoCliente])
+REFERENCES [dbo].[tbl_clientes] ([CodigoCliente])
+GO
+ALTER TABLE [dbo].[tbl_tarjetas]  WITH CHECK ADD FOREIGN KEY([CodigoCliente])
+REFERENCES [dbo].[tbl_clientes] ([CodigoCliente])
+GO
+/****** Object:  StoredProcedure [dbo].[usp_clientes_crear]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+	CREATE PROCEDURE [dbo].[usp_clientes_crear] 
+		-- Parametros de entrada
+		(
+		@Nombre varchar(100),
+		@Direccion varchar(255),
+		@Departamento varchar(100),
+		@Pais varchar(100),
+		@Categoria varchar(50),
+		@Estado varchar(15)
+		)
+	AS
+	BEGIN
+		SET NOCOUNT ON;
+		Insert into tbl_clientes
+		(
+			Nombre,
+			Direccion,
+			Departamento,
+			Pais,
+			Categoria,
+			Estado
+		) values
+		(
+			@Nombre,
+			@Direccion,
+			@Departamento,
+			@Pais,
+			@Categoria,
+			@Estado
+		)
+	END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_clientes_eliminar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+	CREATE PROCEDURE [dbo].[usp_clientes_eliminar] 
+	(
+		@Codigo int
+	)
+	AS
+	BEGIN
+		SET NOCOUNT ON;
+		Delete tbl_clientes 
+		where CodigoCliente=@Codigo
+	END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_clientes_modificar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+	CREATE PROCEDURE [dbo].[usp_clientes_modificar]
+		(
+		@Codigo int,
+		@Nombre varchar(100),
+		@Direccion varchar(255),
+		@Departamento varchar(100),
+		@Pais varchar(100),
+		@Categoria varchar(50),
+		@Estado varchar(15)
+		)
+	AS
+	BEGIN
+		SET NOCOUNT ON;
+
+		Update tbl_clientes
+		set  Nombre = @Nombre,
+			 Direccion = @Direccion,
+			 Departamento= @Departamento,
+			 Pais= @Pais,
+			 Categoria = @Categoria,
+			 Estado = @Estado
+		where CodigoCliente=@Codigo
+	END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_clientes_mostrar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+	CREATE PROCEDURE [dbo].[usp_clientes_mostrar]
+	AS
+	BEGIN
+		SET NOCOUNT ON;
+
+		Select 
+			CodigoCliente,
+			Nombre,
+			Direccion,
+			Departamento,
+			Pais,
+			Categoria,
+			Estado
+		from tbl_clientes;
+		
+	END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_Cuentas_crear]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date:  27-03-2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[usp_Cuentas_crear] 
+	-- Add the parameters for the stored procedure here  
+	( 
+
+	@CodigoCliente int, 
+	@NumeroCuenta varchar (50),  
+	@TipoCuenta varchar (50), 
+	@Saldo decimal (10,2), 
+	@FechaApertura DATETIME, 
+	@Estado varchar (15)
+
+	) 
+
+
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON; 
+	Insert into tbl_cuentas  
+	( 
+	CodigoCliente, 
+	NumeroCuenta, 
+	TipoCuenta, 
+	Saldo, 
+	FechaApertura, 
+	Estado  
+	) 
+
+	values 
+	( 
+	@CodigoCliente, 
+	@NumeroCuenta, 
+	@TipoCuenta, 
+	@Saldo, 
+	@FechaApertura, 
+	@Estado  
+	)
+
+
+    
+END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_Cuentas_editar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date:  27-03-2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[usp_Cuentas_editar] 
+
+    (  
+
+    @Codigo int, 
+    @CodigoCliente int, 
+	@NumeroCuenta varchar (50),  
+	@TipoCuenta varchar (50), 
+	@Saldo decimal (10,2), 
+	@FechaApertura DATETIME, 
+	@Estado varchar (15)
+
+	) 
+
+AS
+BEGIN
+	SET NOCOUNT ON; 
+
+	update tbl_cuentas
+	set 
+	CodigoCliente = @CodigoCliente, 
+	NumeroCuenta = @NumeroCuenta, 
+	TipoCuenta = @TipoCuenta,
+	Saldo = @Saldo, 
+	FechaApertura = @FechaApertura, 
+	Estado = @Estado 
+	where CodigoCuenta= @Codigo 
+
+END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_Cuentas_eliminar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date:  27-03-2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[usp_Cuentas_eliminar] 
+( 
+
+
+@Codigo int 
+
+)
+	
+AS
+BEGIN
+	
+	SET NOCOUNT ON; 
+
+Delete tbl_cuentas 
+where CodigoCuenta =@Codigo
+   
+END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_Cuentas_mostrar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[usp_Cuentas_mostrar]
+AS
+BEGIN
+	SET NOCOUNT ON;
+Select 
+
+
+CodigoCuenta as 'Codigo_Cuenta',
+CodigoCliente as 'Codigo_Cliente',
+NumeroCuenta,
+TipoCuenta,
+Saldo,
+FechaApertura as 'Fecha',
+Estado
+from tbl_cuentas;
+
+
+END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_Usuarios_actualizar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date:  27-03-2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[usp_Usuarios_actualizar] 
+
+    (  
+
+	@Correlativo INT,
+    @Usuario VARCHAR(100) ,
+    @Clave VARCHAR(255),
+    @Estado VARCHAR(15)
+
+ 
+
+	) 
+
+AS
+BEGIN
+	SET NOCOUNT ON; 
+
+	update tbl_usuarios
+	set 
+
+	
+    Usuario=@Usuario ,
+    Clave=@Clave ,
+    Estado=@Estado
+	where Correlativo= @Correlativo 
+
+END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_Usuarios_agregar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date:  27-03-2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[usp_Usuarios_agregar] 
+	-- Add the parameters for the stored procedure here  
+	( 
+
+
+    @Usuario VARCHAR(100) ,
+    @Clave VARCHAR(255),
+    @Estado VARCHAR(15)
+
+
+	) 
+
+
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON; 
+	Insert into tbl_usuarios  
+	( 
+
+
+    Usuario ,
+    Clave,
+    Estado 
+
+
+	) 
+
+	values 
+	( 
+
+    @Usuario,
+    @Clave,
+    @Estado
+	)
+
+
+    
+END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_Usuarios_eliminar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date:  27-03-2025
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[usp_Usuarios_eliminar] 
+( 
+
+
+@Correlativo int 
+
+)
+	
+AS
+BEGIN
+	
+	SET NOCOUNT ON; 
+
+Delete tbl_usuarios 
+where Correlativo =@Correlativo
+   
+END
+GO
+/****** Object:  StoredProcedure [dbo].[usp_Usuarios_mostrar]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[usp_Usuarios_mostrar]
+AS
+BEGIN
+	SET NOCOUNT ON;
+Select 
+
+Correlativo,
+Usuario,
+Clave,
+Estado
+
+from tbl_usuarios;
+
+
+END
+GO
+/****** Object:  Trigger [dbo].[Trg_Clientes_Delete]    Script Date: 15/04/2025 11:23:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		JOSE LEMUS
+-- Create date: 16/03/2025
+-- Description:	trigger tipo delete
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_Clientes_Delete]
+   ON  [dbo].[tbl_clientes]
+   AFTER DELETE
+AS 
+BEGIN
+	SET NOCOUNT ON;
+	
+	Insert into tbl_Clientes_backup
+(
+			CodigoCliente,
+			Nombre,
+			Direccion,
+			Departamento,
+			Pais,
+			Categoria,
+			Estado,
+			UsuarioCreacion,
+			FechaCreacion,
+			HoraCreacion,
+			UsuarioActualizacion,
+			FechaActualizacion,
+			HoraActualizacion,
+			UsuarioEliminacion,
+			FechaEliminacion,
+			HoraEliminacion
+		)
+		Select 
+			d.CodigoCliente,
+			d.Nombre,
+			d.Direccion,
+			d.Departamento,
+			d.Pais,
+			d.Categoria,
+			d.Estado,
+			d.UsuarioCreacion,
+			d.FechaCreacion,
+			d.HoraCreacion,
+			d.UsuarioActualizacion,
+			d.FechaActualizacion,
+			d.HoraActualizacion,
+			SYSTEM_USER UsuarioEliminacion,
+			CONVERT(Date,GETDATE()) as FechaEliminacion,
+			CAST(GETDATE() AS TIME(7)) as HoraEliminacion
+		from deleted d;
+
+END
+GO
+ALTER TABLE [dbo].[tbl_clientes] ENABLE TRIGGER [Trg_Clientes_Delete]
+GO
+/****** Object:  Trigger [dbo].[Trg_clientes_EvitaEliminarClientesConCuentas]    Script Date: 15/04/2025 11:23:29 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TRIGGER [dbo].[Trg_clientes_EvitaEliminarClientesConCuentas]
+	   ON  [dbo].[tbl_clientes]
+	   INSTEAD OF DELETE
+	AS 
+	BEGIN
+		--SET NOCOUNT ON;
+		IF EXISTS (SELECT * FROM tbl_cuentas WHERE CodigoCliente IN (SELECT CodigoCliente FROM deleted))
+			BEGIN
+				RAISERROR ('ERROR TRIGGER: No se permiten eliminar clientes con cuentas asociadas',16,1);
+				RETURN;
+			END
+		ELSE
+			BEGIN
+				DELETE FROM tbl_clientes WHERE CodigoCliente IN (SELECT CodigoCliente FROM deleted);
+			END
+	END
+
+GO
+ALTER TABLE [dbo].[tbl_clientes] ENABLE TRIGGER [Trg_clientes_EvitaEliminarClientesConCuentas]
+GO
+/****** Object:  Trigger [dbo].[Trg_Clientes_insert]    Script Date: 15/04/2025 11:23:29 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		JOSE LEMUS
+-- Create date: 16/03/2025
+-- Description:	trigger tipo insert
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_Clientes_insert]
+   ON  [dbo].[tbl_clientes] 
+   AFTER INSERT 
+AS 
+BEGIN
+	SET NOCOUNT ON;
+
+update tbl_clientes
+set UsuarioCreacion = SYSTEM_USER,
+FechaCreacion = GETDATE(),
+HoraCreacion = CAST(Getdate() as time (7))
+from tbl_clientes c
+inner join inserted i on c.CodigoCliente = i.CodigoCliente;
+
+END
+GO
+ALTER TABLE [dbo].[tbl_clientes] ENABLE TRIGGER [Trg_Clientes_insert]
+GO
+/****** Object:  Trigger [dbo].[Trg_Clientes_Update]    Script Date: 15/04/2025 11:23:29 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		JOSE LEMUS
+-- Create date: 16/03/2025
+-- Description:	trigger tipo update
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_Clientes_Update]
+   ON  [dbo].[tbl_clientes]
+   AFTER UPDATE
+AS 
+BEGIN
+	SET NOCOUNT ON;
+
+Update tbl_clientes
+		Set UsuarioActualizacion=SYSTEM_USER,
+			FechaActualizacion=GETDATE(),
+			HoraActualizacion=CAST(getdate() as Time(7))
+		From tbl_clientes c
+		Inner join inserted i on c.CodigoCliente=i.CodigoCliente;
+
+END
+GO
+ALTER TABLE [dbo].[tbl_clientes] ENABLE TRIGGER [Trg_Clientes_Update]
+GO
+/****** Object:  Trigger [dbo].[Trg_clientes_backup_ControlDelete]    Script Date: 15/04/2025 11:23:29 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Pablo
+-- Create date: 30/03/2025
+-- Description:	Evita eliminación de cualquier dato de esa tabla clientes_backup
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_clientes_backup_ControlDelete]
+   ON  [dbo].[tbl_clientes_backup]
+  INSTEAD OF DELETE
+AS 
+BEGIN
+
+RAISERROR( 'ERROR TRIGUER:No se permite eliminar',16,1);
+	RETURN;
+
+END;
+GO
+ALTER TABLE [dbo].[tbl_clientes_backup] ENABLE TRIGGER [Trg_clientes_backup_ControlDelete]
+GO
+/****** Object:  Trigger [dbo].[Trg_cuentas_ControlDelete]    Script Date: 15/04/2025 11:23:29 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Pablo
+-- Create date: 30/03/2025
+-- Description:	Evita eliminar cuentas si tiene movimientos asociados
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_cuentas_ControlDelete]
+   ON  [dbo].[tbl_cuentas]
+  INSTEAD OF DELETE
+AS 
+BEGIN
+If EXISTS (SELECT * FROM tbl_movimientos WHERE CodigoCuenta in (SELECT CodigoCuenta from deleted))
+	BEGIN
+	RAISERROR( 'TRiguer:No se permite eliminar cuentas si tienen movimientos asociados ',16,1);
+	RETURN;
+END;
+
+ELSE
+
+BEGIN
+DELETE FROM tbl_cuentas WHERE CodigoCuenta IN(SELECT CodigoCuenta FROM deleted);
+END;
+
+
+END;
+GO
+ALTER TABLE [dbo].[tbl_cuentas] ENABLE TRIGGER [Trg_cuentas_ControlDelete]
+GO
+/****** Object:  Trigger [dbo].[Trg_Cuentas_Delete]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		JOSE LEMUS
+-- Create date: 27/03/2025
+-- Description:	trigger tipo delete
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_Cuentas_Delete]
+   ON  [dbo].[tbl_cuentas]
+   AFTER DELETE
+AS 
+BEGIN
+	SET NOCOUNT ON;
+	
+	Insert into tbl_cuentas_backup
+(
+            CodigoCuenta,
+			CodigoCliente,
+			NumeroCuenta,
+			TipoCuenta,
+			Saldo,
+			FechaApertura,
+			Estado,
+			UsuarioCreacion,
+			FechaCreacion,
+			HoraCreacion,
+			UsuarioActualizacion,
+			FechaActualizacion,
+			HoraActualizacion,
+			UsuarioEliminacion,
+			FechaEliminacion,
+			HoraEliminacion
+		)
+		Select 
+			d.CodigoCuenta,
+			d.CodigoCliente,
+			d.NumeroCuenta,
+			d.TipoCuenta,
+			d.Saldo,
+			d.FechaApertura,
+			d.Estado,
+			d.UsuarioCreacion,
+			d.FechaCreacion,
+			d.HoraCreacion,
+			d.UsuarioActualizacion,
+			d.FechaActualizacion,
+			d.HoraActualizacion,
+
+			SYSTEM_USER UsuarioEliminacion,
+			CONVERT(Date,GETDATE()) as FechaEliminacion,
+			CAST(GETDATE() AS TIME(7)) as HoraEliminacion
+		from deleted d;
+
+END
+GO
+ALTER TABLE [dbo].[tbl_cuentas] ENABLE TRIGGER [Trg_Cuentas_Delete]
+GO
+/****** Object:  Trigger [dbo].[Trg_Cuentas_insert]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		JOSE LEMUS
+-- Create date: 27/03/2025
+-- Description:	trigger tipo insert
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_Cuentas_insert]
+   ON  [dbo].[tbl_cuentas] 
+   AFTER INSERT 
+AS 
+BEGIN
+	SET NOCOUNT ON;
+
+update tbl_cuentas
+set UsuarioCreacion = SYSTEM_USER,
+FechaCreacion = GETDATE(),
+HoraCreacion = CAST(Getdate() as time (7))
+from tbl_cuentas cue
+inner join inserted i on cue.CodigoCuenta = i.CodigoCuenta;
+
+END
+GO
+ALTER TABLE [dbo].[tbl_cuentas] ENABLE TRIGGER [Trg_Cuentas_insert]
+GO
+/****** Object:  Trigger [dbo].[Trg_Cuentas_Update]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		JOSE LEMUS
+-- Create date: 27/03/2025
+-- Description:	trigger tipo update
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_Cuentas_Update]
+   ON  [dbo].[tbl_cuentas]
+   AFTER UPDATE
+AS 
+BEGIN
+	SET NOCOUNT ON;
+
+Update tbl_cuentas
+		Set UsuarioActualizacion=SYSTEM_USER,
+			FechaActualizacion=GETDATE(),
+			HoraActualizacion=CAST(getdate() as Time(7))
+		From tbl_cuentas cue
+		Inner join inserted i on cue.CodigoCuenta=i.CodigoCuenta;
+
+END
+GO
+ALTER TABLE [dbo].[tbl_cuentas] ENABLE TRIGGER [Trg_Cuentas_Update]
+GO
+/****** Object:  Trigger [dbo].[Trg_pagos_ControlInsert]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 04/04/2025
+-- Description:	Evita agregar pagos con fecha anterior al día actual y con montos negativos
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_pagos_ControlInsert] 
+   ON  [dbo].[tbl_pagos]
+
+   INSTEAD OF INSERT
+AS 
+BEGIN
+	
+	SET NOCOUNT ON;
+	IF EXISTS ( SELECT * FROM INSERTED WHERE FechaPago  <  GETDATE ())
+	
+
+BEGIN
+RAISERROR ( 'TRIGGER: No se permite agregar pagos con fecha anterior al dia actual ', 16, 1) ;
+	RETURN;
+END;
+
+ELSE IF EXISTS ( SELECT * FROM INSERTED WHERE Monto < 0 )
+
+BEGIN
+RAISERROR ( 'TRIGGER: No se permite agregar pagos con monto negativo  ', 16, 1) ;
+	RETURN;
+END
+ELSE 
+BEGIN
+INSERT INTO tbl_pagos (CodigoPrestamo, CodigoTarjeta, CodigoCuenta, Monto, MonedaPago, FechaPago,Estado)
+SELECT CodigoPrestamo, CodigoTarjeta, CodigoCuenta, Monto, MonedaPago, FechaPago, Estado
+FROM inserted;
+END
+
+END;
+GO
+ALTER TABLE [dbo].[tbl_pagos] ENABLE TRIGGER [Trg_pagos_ControlInsert]
+GO
+/****** Object:  Trigger [dbo].[Trg_pagos_ControlUpdate]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 04/04/2025
+-- Description:	que evite actualizar el monto de la tarjeta si el monto es negativo
+-- =============================================
+
+CREATE TRIGGER [dbo].[Trg_pagos_ControlUpdate] 
+   ON  [dbo].[tbl_pagos]
+
+   INSTEAD OF UPDATE
+AS 
+BEGIN
+	
+	SET NOCOUNT ON;
+	IF EXISTS ( SELECT * FROM inserted WHERE Monto < 0  )
+
+BEGIN
+RAISERROR ( 'TRIGGER: No se permite actualizar el pago con un valor negativo', 16, 1) ;
+	RETURN;
+END
+
+UPDATE pag
+SET 
+ 
+pag.CodigoPrestamo= ins.CodigoPrestamo, 
+pag.CodigoTarjeta= ins.CodigoTarjeta,  
+pag.CodigoCuenta= ins.CodigoCuenta,  
+pag.Monto = ins.Monto,  
+pag.MonedaPago= ins.MonedaPago, 
+pag.FechaPago= ins.FechaPago,   
+pag.Estado= ins.Estado
+FROM tbl_pagos pag
+INNER JOIN inserted ins ON pag.CodigoPrestamo = ins.CodigoPrestamo;
+END;
+GO
+ALTER TABLE [dbo].[tbl_pagos] ENABLE TRIGGER [Trg_pagos_ControlUpdate]
+GO
+/****** Object:  Trigger [dbo].[Trg_prestamos_ControlDelete]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Jose Pablo
+-- Create date: 30/03/2025
+-- Description:	Evita eliminar prestamos si tiene pagos asociados
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_prestamos_ControlDelete]
+   ON  [dbo].[tbl_prestamos]
+  INSTEAD OF DELETE
+AS 
+BEGIN
+
+SET NOCOUNT ON;
+If EXISTS (SELECT * FROM tbl_pagos WHERE CodigoPrestamo in (SELECT CodigoPrestamo from deleted))
+	BEGIN
+	RAISERROR( 'TRiguer:No se permite eliminar prestamos con pagos asociados ',16,1);
+	RETURN;
+END;
+
+ELSE
+
+BEGIN
+DELETE FROM tbl_prestamos WHERE CodigoPrestamo IN(SELECT CodigoPrestamo FROM deleted);
+END;
+END;
+GO
+ALTER TABLE [dbo].[tbl_prestamos] ENABLE TRIGGER [Trg_prestamos_ControlDelete]
+GO
+/****** Object:  Trigger [dbo].[Trg_prestamos_ControlInsert]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 04/04/2025
+-- Description:	Evite agregar prestamos si el cliente ya tiene asociado otro préstamo
+-- =============================================
+
+	CREATE TRIGGER [dbo].[Trg_prestamos_ControlInsert]
+	   ON  [dbo].[tbl_prestamos] 
+	   INSTEAD OF INSERT
+	AS 
+	BEGIN
+		IF EXISTS(SELECT * FROM tbl_prestamos WHERE CodigoCliente IN (SELECT CodigoCliente FROM inserted))
+			BEGIN
+				RAISERROR('ERROR TRIGGER: No se permite agregar prestamo, porque ya existe prestamo asociada al cliente',16,0);
+				RETURN;
+			END;
+		ELSE
+			BEGIN
+				INSERT INTO tbl_prestamos (CodigoCliente, MotivoPrestamo, Monto, Moneda, TasaInteres, PlazoMeses, FechaPrestamo, Estado)
+				SELECT CodigoCliente, MotivoPrestamo, Monto, Moneda, TasaInteres, PlazoMeses, FechaPrestamo, Estado
+				FROM inserted ;
+			END;
+	END;
+GO
+ALTER TABLE [dbo].[tbl_prestamos] ENABLE TRIGGER [Trg_prestamos_ControlInsert]
+GO
+/****** Object:  Trigger [dbo].[Trg_prestamos_ControlUpdate]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus
+-- Create date: 04/04/2025
+-- Description:	evite actualizar datos del préstamo si se cumple alguna de las siguientes condiciones:
+--No se permite actualizar monto del préstamo si el monto es negativo
+--No se permite actualizar la tasa de interés si la tasa es negativa
+--No se permite actualizar el estado del préstamo, á estado Inactivo, si el monto es mayor a cero.
+-- =============================================
+
+CREATE TRIGGER [dbo].[Trg_prestamos_ControlUpdate] 
+   ON  [dbo].[tbl_prestamos]
+
+   INSTEAD OF UPDATE
+AS 
+BEGIN
+	
+	SET NOCOUNT ON;
+	IF EXISTS ( SELECT * FROM inserted WHERE Monto < 0  )
+BEGIN
+RAISERROR ( 'TRIGGER: No se permite actualizar el prestamo con un valor negativo', 16, 1) ;
+	RETURN;
+END
+
+ELSE IF  EXISTS ( SELECT * FROM inserted WHERE TasaInteres < 0  )
+BEGIN
+RAISERROR ( 'TRIGGER: No se permite actualizar la tasa interes con un valor negativo', 16, 1) ;
+	RETURN;
+END
+
+ELSE IF  EXISTS ( SELECT * FROM inserted ins WHERE ins.Estado= 'Inactivo' AND ins.Monto > 0 )
+BEGIN
+RAISERROR ( 'No se permite actualizar el estado del préstamo, á estado Inactivo, si el monto es mayor a cero', 16, 1) ;
+	RETURN;
+END
+
+UPDATE pres
+SET 
+ 
+pres.CodigoCliente= ins.CodigoCliente,  
+pres.Monto = ins.Monto,  
+pres.TasaInteres= ins.TasaInteres, 
+pres.FechaPrestamo= ins.FechaPrestamo,   
+pres.Estado= ins.Estado
+FROM tbl_prestamos pres
+INNER JOIN inserted ins ON pres.CodigoPrestamo = ins.CodigoPrestamo;
+END;
+GO
+ALTER TABLE [dbo].[tbl_prestamos] ENABLE TRIGGER [Trg_prestamos_ControlUpdate]
+GO
+/****** Object:  Trigger [dbo].[Trg_tarjetas_ControlDelete]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Pablo
+-- Create date: 30/03/2025
+-- Description:	Evita eliminación de tarjetas si esa tarjeta tiene estado Activo
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_tarjetas_ControlDelete]
+   ON  [dbo].[tbl_tarjetas]
+  INSTEAD OF DELETE
+AS 
+BEGIN
+
+SET NOCOUNT ON;
+If EXISTS (SELECT * FROM tbl_tarjetas WHERE Estado='Activo' AND CodigoTarjeta In (SELECT CodigoTarjeta from deleted))
+	BEGIN
+	RAISERROR( 'Triguer:No se permite eliminar tarjetas si esa tarjeta tiene estado Activo ',16,1);
+	RETURN;
+END;
+
+ELSE
+
+BEGIN
+DELETE FROM tbl_tarjetas WHERE CodigoTarjeta IN(SELECT CodigoTarjeta FROM deleted);
+END;
+END;
+GO
+ALTER TABLE [dbo].[tbl_tarjetas] ENABLE TRIGGER [Trg_tarjetas_ControlDelete]
+GO
+/****** Object:  Trigger [dbo].[Trg_tarjetas_ControlInsert]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus 
+-- Create date: o4/04/2025
+-- Description:	evite agregar tarjetas con CVV existentes, adicional validar que evite agregar tarjetas con montos mayores a los
+--permitidos según su categoría, tipo Standard no puede ser mayor a 3000, tipo Oro no puede ser mayor a 5000, tipo Platinum no puede ser mayor a 10000
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_tarjetas_ControlInsert] 
+   ON  [dbo].[tbl_tarjetas]
+
+   INSTEAD OF INSERT
+AS 
+BEGIN
+	
+	SET NOCOUNT ON;
+	IF EXISTS ( SELECT * FROM tbl_tarjetas WHERE CVV IN (SELECT CVV FROM inserted ))
+	
+
+BEGIN
+RAISERROR ( 'TRIGGER: No se permite agregar tarjetas con cvv ya exixtente', 16, 1) ;
+	RETURN;
+END;
+ELSE IF EXISTS 
+( SELECT * FROM inserted  WHERE (CategoriaTarjeta = 'Standard' AND Monto > 3000) OR (CategoriaTarjeta = 'Oro' AND Monto > 5000) OR (CategoriaTarjeta = 'Platinum' AND Monto > 10000))
+BEGIN
+RAISERROR ( 'TRIGGER: Sugun la categoria no es permitido el monto  ', 16, 1) ;
+	RETURN;
+END;
+ELSE 
+BEGIN
+INSERT INTO tbl_tarjetas (CodigoCliente, NumeroTarjeta, TipoTarjeta, CategoriaTarjeta, FechaExpiracion, CVV, Monto, Moneda, Estado )
+SELECT CodigoCliente, NumeroTarjeta, TipoTarjeta, CategoriaTarjeta, FechaExpiracion, CVV, Monto, Moneda, Estado
+FROM inserted;
+END;
+
+END;
+GO
+ALTER TABLE [dbo].[tbl_tarjetas] ENABLE TRIGGER [Trg_tarjetas_ControlInsert]
+GO
+/****** Object:  Trigger [dbo].[Trg_tarjetas_ControlUpdate]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Lemus 
+-- Create date: 04/04/2025
+-- Description:	evite actualizar tarjetas a estado Inactivo si esa tarjeta tiene pagos asociados.
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_tarjetas_ControlUpdate] 
+   ON  [dbo].[tbl_tarjetas]
+
+   INSTEAD OF UPDATE
+AS 
+BEGIN
+	
+	SET NOCOUNT ON;
+	IF EXISTS ( SELECT * FROM inserted WHERE Estado = 'Inactivo' )
+BEGIN
+IF EXISTS ( SELECT * FROM tbl_pagos WHERE CodigoTarjeta IN (SELECT CodigoTarjeta FROM inserted ))
+BEGIN
+RAISERROR ( 'TRIGGER: No se permite inhabilitar tarjetas con pagos asociados', 16, 1) ;
+	RETURN;
+END
+END
+
+UPDATE tar
+SET 
+ 
+tar.NumeroTarjeta= ins.NumeroTarjeta, 
+tar.TipoTarjeta= ins.TipoTarjeta,  
+tar.CategoriaTarjeta= ins.CategoriaTarjeta,  
+tar.FechaExpiracion= ins.FechaExpiracion,  
+tar.CVV= ins.CVV, 
+tar.Monto= ins.Monto,  
+tar.Moneda= ins.Moneda, 
+tar.Estado= ins.Estado
+FROM tbl_tarjetas tar
+INNER JOIN inserted ins ON tar.NumeroTarjeta = ins.NumeroTarjeta;
+END;
+GO
+ALTER TABLE [dbo].[tbl_tarjetas] ENABLE TRIGGER [Trg_tarjetas_ControlUpdate]
+GO
+/****** Object:  Trigger [dbo].[Trg_usuarios_ControlDelete]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Jose Pablo
+-- Create date: 30/03/2025
+-- Description:	Evita eliminación del usuario si ese usuario es Admin
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_usuarios_ControlDelete]
+   ON  [dbo].[tbl_usuarios]
+  INSTEAD OF DELETE
+AS 
+BEGIN
+
+SET NOCOUNT ON;
+If EXISTS (SELECT * FROM tbl_usuarios WHERE  Usuario like 'Admin')
+	BEGIN
+	RAISERROR( 'Triguer:No se permite eliminar el usuario si ese usuario es Admin  ',16,1);
+	RETURN;
+END;
+
+ELSE If EXISTS (SELECT * FROM deleted WHERE  Estado='Activo')
+	BEGIN
+	RAISERROR( 'Triguer:No se puede eliminar ususarios activos  ',16,1);
+	RETURN;
+	END;
+ELSE
+
+BEGIN
+DELETE FROM tbl_usuarios WHERE Correlativo IN(SELECT Correlativo FROM deleted);
+END;
+END;
+GO
+ALTER TABLE [dbo].[tbl_usuarios] ENABLE TRIGGER [Trg_usuarios_ControlDelete]
+GO
+/****** Object:  Trigger [dbo].[Trg_Usuarios_Delete]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		JOSE LEMUS
+-- Create date: 27/03/2025
+-- Description:	trigger tipo delete
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_Usuarios_Delete]
+   ON  [dbo].[tbl_usuarios]
+   AFTER DELETE
+AS 
+BEGIN
+	SET NOCOUNT ON;
+	
+	Insert into tbl_usuarios_Backup
+(
+			Correlativo,
+			Usuario,
+			Clave,
+			Estado,
+			UsuarioCreacion,
+			FechaCreacion,
+			HoraCreacion,
+			UsuarioActualizacion,
+			FechaActualizacion,
+			HoraActualizacion,
+			UsuarioEliminacion,
+			FechaEliminacion,
+			HoraEliminacion
+		)
+		Select 
+			d.Correlativo,
+			d.Usuario,
+			d.Clave,
+			d.Estado,
+			d.UsuarioCreacion,
+			d.FechaCreacion,
+			d.HoraCreacion,
+			d.UsuarioActualizacion,
+			d.FechaActualizacion,
+			d.HoraActualizacion,
+			SYSTEM_USER UsuarioEliminacion,
+			CONVERT(Date,GETDATE()) as FechaEliminacion,
+			CAST(GETDATE() AS TIME(7)) as HoraEliminacion
+		from deleted d;
+
+END
+GO
+ALTER TABLE [dbo].[tbl_usuarios] ENABLE TRIGGER [Trg_Usuarios_Delete]
+GO
+/****** Object:  Trigger [dbo].[Trg_Usuarios_insert]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		JOSE LEMUS
+-- Create date: 16/03/2025
+-- Description:	trigger tipo insert
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_Usuarios_insert]
+   ON  [dbo].[tbl_usuarios] 
+   AFTER INSERT 
+AS 
+BEGIN
+	SET NOCOUNT ON;
+
+update tbl_usuarios
+set UsuarioCreacion = SYSTEM_USER,
+FechaCreacion = GETDATE(),
+HoraCreacion = CAST(Getdate() as time (7))
+from tbl_usuarios usu
+inner join inserted i on usu.Correlativo = i.Correlativo;
+
+END
+GO
+ALTER TABLE [dbo].[tbl_usuarios] ENABLE TRIGGER [Trg_Usuarios_insert]
+GO
+/****** Object:  Trigger [dbo].[Trg_Usuarios_Update]    Script Date: 15/04/2025 11:23:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		JOSE LEMUS
+-- Create date: 027/03/2025
+-- Description:	trigger tipo update
+-- =============================================
+CREATE TRIGGER [dbo].[Trg_Usuarios_Update]
+   ON  [dbo].[tbl_usuarios]
+   AFTER UPDATE
+AS 
+BEGIN
+	SET NOCOUNT ON;
+
+Update tbl_usuarios
+		Set UsuarioActualizacion=SYSTEM_USER,
+			FechaActualizacion=GETDATE(),
+			HoraActualizacion=CAST(getdate() as Time(7))
+		From tbl_usuarios usu
+		Inner join inserted i on usu.Correlativo=i.Correlativo;
+
+END
+GO
+ALTER TABLE [dbo].[tbl_usuarios] ENABLE TRIGGER [Trg_Usuarios_Update]
+GO
+USE [master]
+GO
+ALTER DATABASE [DB_BANCO2] SET  READ_WRITE 
+GO
